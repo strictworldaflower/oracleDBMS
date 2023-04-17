@@ -1,0 +1,126 @@
+select price+100
+from mybook
+where bookid=3;
+
+select sum(price), avg(price), count(*), count(price)
+from mybook;
+
+select sum(price), avg(price), count(*)
+from mybook
+where bookid>=4;
+
+select *
+from mybook
+where price is null;
+
+select *
+from mybook
+where price='';
+
+select name "이름", nvl(phone, 'unkown')
+from customer;
+
+select rownum "rownum", custid, name, phone
+from customer
+where rownum <=3;
+
+select rownum "순번", custid, name, phone
+from customer
+where rownum <=2
+order by name;
+
+select rownum "순번", custid, name, phone
+from (select custid, name, phone
+from customer
+order by name)
+where rownum <=2;
+
+select custid, name, phone
+from customer
+order by name;
+
+select orderid, saleprice
+from orders
+where saleprice <=(select avg(saleprice), sum(saleprice) from orders);
+
+select orderid, custid, saleprice
+from orders md
+where saleprice > (select avg(saleprice)
+from orders so
+where md.custid=so.custid);
+
+select sum(saleprice) "total"
+from orders
+where custid not in (select custid from customer
+where address like '%대한민국%');
+
+select orderid, saleprice
+from orders
+where saleprice > all (select saleprice
+from orders
+where custid=3);
+
+select sum(saleprice) "total"
+from orders od
+where not exists (select *
+from customer cs
+where address like '%대한민국%' and cs.custid=od.
+custid);
+
+select (select name
+from customer cs
+where cs.custid=od.custid) "name", sum(saleprice) "total"
+from orders od
+group by od.custid;
+
+alter table orders add bookname varchar2(40);
+
+update orders
+set bookname=(select bookname from book where book.bookid=orders.bookid);
+
+select cs.name, sum(od.saleprice) "total"
+from (select custid, name
+from customer
+where custid <= 2) cs,
+orders od
+where cs.custid=od.custid
+group by cs.name;
+
+select *
+from book
+where bookname like '%축구%';
+
+create view vw_book
+as select *
+from book
+where bookname like '%축구%';
+
+create view vw_customer
+as select *
+from customer
+where address like '%대한민국%';
+
+select *
+from vw_customer;
+
+create view vw_orders (orderid, custid, name, bookid, bookname, saleprice, orderdate)
+as select od.orderid, od.custid, cs.name,
+od.bookid, bk.bookname, od.saleprice, od.orderdate
+from orders od, customer cs, book bk
+where od.custid=cs.custid and od.bookid=bk.bookid;
+
+select orderid, bookname, saleprice
+from vw_orders
+where name ='김연아';
+
+create or replace view vw_customer (custid, name, address)
+as select custid,name, address
+from customer
+where address like '%영국%';
+
+select *
+from vw_customer;
+
+drop view vw_customer;
+
+select *from user_views;
