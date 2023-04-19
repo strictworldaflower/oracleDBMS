@@ -1,0 +1,130 @@
+
+CREATE OR REPLACE PROCEDURE InsertBook(
+    myBookID IN NUMBER,
+    myBookName IN VARCHAR2,
+    myPublisher IN VARCHAR2,
+    myPrice IN NUMBER)
+AS
+BEGIN
+    INSERT INTO Book(bookid, bookname, publisher, price)
+        VALUES(myBookID, myBookName, myPublisher, myPrice);
+END;
+/
+
+EXEC InsertBook(13, '스포츠과학', '마당과학서적', 25000);
+SELECT * FROM Book;
+
+
+CREATE OR REPLACE PROCEDURE BookInsertOrUpdate(
+    myBookID NUMBER,
+    myBookName VARCHAR2,
+    myPublisher VARCHAR2,
+    myPrice INT)
+AS
+    mycount NUMBER;
+BEGIN
+    SELECT count(*) INTO mycount FROM Book
+    WHERE bookname LIKE myBookName;
+    IF mycount!=0 THEN
+        UPDATE Book SET price = myPrice
+            WHERE bookname LIKE myBookName;
+	 ELSE
+             INSERT INTO Book(bookid, bookname, publisher, price)
+             VALUES(myBookID, myBookName, myPublisher, myPrice);
+        END IF;
+    END;
+/
+EXEC BookInsertOrUpdate(15, '스포츠 즐거움', '마당과학서적', 25000);
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE AveragePrice(
+  AverageVal OUT NUMBER)
+AS
+BEGIN
+  SELECT AVG(price) INTO AverageVal FROM Book WHERE price IS NOT NULL;
+END;
+/
+
+SET SERVEROUTPUT ON;
+DECLARE
+  AverageVal NUMBER;
+BEGIN
+  AveragePrice(AverageVal);
+  DBMS_OUTPUT.PUT_LINE('책값 평균: '||AverageVal);
+END;
+
+
+
+
+CREATE OR REPLACE PROCEDURE Interest
+AS
+  myInterest NUMERIC;
+  Price NUMERIC;
+  CURDOR InterestCursor IS SELECT saleprice FROM Orders;
+BEGIN
+  myInterest :=0.0;
+  OPEN InterestCursor;
+  LOOP
+    FETCH InterestCursor INTO Price;
+    EXIT WHEN InterestCursor%NOTFOUND;
+    IF Price >= 30000 THEN
+       myInterest :=myInterest + Price * 0.1;
+    ELSE
+       myInterest :=myInterest + Price * 0.05;
+    END IF;
+   END LOOP;
+   CLOSE InterestCurdor;
+   DBMS_OUTPUT.PUT_LINE('전체 이익 금액 = '||myInterest);
+END;
+/
+SET SERVEROUTPUT ON;
+EXEC Interest;
+
+
+
+
+
+
+
+
+CREATE TABLE BOOK_log(
+  bookid_1 NUMBER,
+  bookname_1 VARCHAR2(40),
+  publisher_1 VARCHAR2(40),
+  price_1 NUMBER);
+
+
+CREATE OR REPLACE TRIGGER AfterInsertBook
+AFTER INSERT ON Book FOR EACH ROW
+DECLARE
+  avarege NUMBER;
+BEGIN
+  INSERT INTO Book_log
+    VALUES(:new.bookid, :new.publisher, :new.price);
+  DBMS_OUTPUT.PUT_LINE('삽입 투플을 Book_log 테이블에 백업..');
+END;
+
+INSERT INTO Book VALUES(14, '스포츠 과학 1', '이상미디어', 25000);
+SELECT * FROM Book WHERE BOOKID='14';
+SELECT * FROM Book_log WHERE BOOKID_L='14';
+
+
+
+CREATE OR REPLACE FUNCTION fnc_Interest(
+Price NUMBER) RETURN INT
+IS
+ myInterest NUMBER;
+BEGIN
+IF Price >= 30000 THEN myInterest :=Price * 0.1;
+ELSE myInterest :=Price * 0.05;
+END IF;
+RETURN myInterst;
+END;
+/
+
+SELECT custid, orderid, saleprice, fnc_Interest(saleprice) interest
+FROM Orders;
